@@ -1,2 +1,3 @@
-# ey
-A go library to edit yaml (ey) without marshaling into a struct
+# ey (edit-yaml)
+
+A go library to ease reading and editing of unstructured yaml.
