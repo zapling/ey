@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -79,7 +80,8 @@ func newYamlNode(v any) (*yaml.Node, error) {
 		return newMapNode(rv)
 
 	case reflect.Struct:
-		return marshalIntoNode(iface)
+		return newStructNode(rv)
+		// return marshalIntoNode(iface)
 
 	default:
 		// Last resort: fmt.Stringer or plain sprintf.
@@ -130,13 +132,45 @@ func newMapNode(rv reflect.Value) (*yaml.Node, error) {
 	return n, nil
 }
 
-func marshalIntoNode(v any) (*yaml.Node, error) {
-	var doc yaml.Node
-	if err := doc.Encode(v); err != nil {
-		return nil, err
+func newStructNode(rv reflect.Value) (*yaml.Node, error) {
+	n := &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map"}
+	rt := rv.Type()
+	for i := range rt.NumField() {
+		f := rt.Field(i)
+		if !f.IsExported() {
+			continue
+		}
+		fv := rv.Field(i)
+
+		// Determine the field name from yaml tag or field name.
+		name := strings.ToLower(f.Name)
+		if tag, ok := f.Tag.Lookup("yaml"); ok {
+			if tag == "-" {
+				continue
+			}
+			if parts := strings.Split(tag, ","); parts[0] != "" {
+				name = parts[0]
+			}
+		}
+
+		kNode := newScalarNode("!!str", name)
+		vNode, err := newYamlNode(fv.Interface())
+		if err != nil {
+			return nil, fmt.Errorf("field %s: %w", f.Name, err)
+		}
+
+		n.Content = append(n.Content, kNode, vNode)
 	}
-	return unwrapDocument(&doc), nil
+	return n, nil
 }
+
+// func marshalIntoNode(v any) (*yaml.Node, error) {
+// 	var doc yaml.Node
+// 	if err := doc.Encode(v); err != nil {
+// 		return nil, err
+// 	}
+// 	return unwrapDocument(&doc), nil
+// }
 
 // unwrapDocument strips the outer !!document wrapper that yaml.Node.Encode
 // always adds.
