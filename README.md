@@ -74,6 +74,47 @@ doc.SetDefault("timeout", 30)
 doc.Delete("deprecated-field")
 ```
 
+`Set()` accepts any Go type:
+
+```go
+// Primitives
+doc.Set("name", "my-service")        // name: "my-service"
+doc.Set("replicas", 3)               // replicas: 3
+doc.Set("ratio", 0.75)               // ratio: 0.75
+doc.Set("enabled", true)             // enabled: true
+
+// Unquoted string (Raw)
+doc.Set("policy", ey.Raw("Always"))  // policy: Always
+
+// Slice
+doc.Set("tags", []string{"a", "b"})  // tags:
+                                     //   - "a"
+                                     //   - "b"
+
+// Map
+doc.Set("labels", map[string]string{
+    "env":  "prod",
+    "team": "platform",
+})
+// labels:
+//   env: "prod"
+//   team: "platform"
+
+// Struct (uses yaml tags if present)
+type Resources struct {
+    CPU    string `yaml:"cpu"`
+    Memory string `yaml:"memory"`
+}
+doc.Dig("limits").Set("resources", Resources{CPU: "500m", Memory: "128Mi"})
+// limits:
+//   resources:
+//     cpu: "500m"
+//     memory: "128Mi"
+
+// Nil
+doc.Set("optional", nil) // optional: null
+```
+
 ### Digging into nested paths
 
 `Dig` traverses a path, **creating intermediate maps as needed**. It returns the node at the end of the path, ready for further chaining.
