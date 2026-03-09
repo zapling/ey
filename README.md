@@ -28,10 +28,10 @@ fmt.Print(doc.String())
 ```
 
 ```yaml
-name: my-service
+name: "my-service"
 version: 1.0.0
 server:
-  host: localhost
+  host: "localhost"
   port: 8080
 ```
 
@@ -87,8 +87,22 @@ doc.Dig("resources", "limits").
 ```yaml
 resources:
   limits:
-    cpu: 500m
-    memory: 128Mi
+    cpu: "500m"
+    memory: "128Mi"
+```
+
+### Raw (unquoted) string values
+
+By default, string values are double-quoted in the YAML output. Wrap a string in `ey.Raw` to suppress quoting — useful for YAML anchors, references, or any value that must appear bare.
+
+```go
+doc.Set("pull_policy", ey.Raw("IfNotPresent"))
+doc.Set("ref", ey.Raw("*my-anchor"))
+```
+
+```yaml
+pull_policy: IfNotPresent
+ref: *my-anchor
 ```
 
 ### Working with sequences
@@ -121,6 +135,7 @@ s := doc.String()
 
 | Method | Description |
 |---|---|
+| `Raw(string)` | String type whose value is written unquoted |
 | `Parse(data any) (*Node, error)` | Parse a YAML byte slice, any Go value, or `nil` |
 | `Get(path ...string) *Node` | Traverse a path; returns empty node if not found |
 | `Dig(path ...string) *Node` | Traverse a path, creating missing maps along the way |
