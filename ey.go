@@ -239,6 +239,34 @@ func (n *Node) Delete(key string) *Node {
 	return n
 }
 
+func (n *Node) IsEmpty() bool {
+	if n == nil || n.Node == nil {
+		return true
+	}
+	m := rootMapping(n.Node)
+	if m == nil {
+		return true
+	}
+	return len(m.Content) == 0
+}
+
+func (n *Node) Slice() []*Node {
+	var nodes []*Node
+	if n == nil || n.Node == nil || n.Kind != yaml.SequenceNode {
+		return nodes
+	}
+	for _, item := range n.Content {
+		nodes = append(nodes, &Node{Node: item, parent: n.Node})
+	}
+	return nodes
+}
+
+func (n *Node) ForEach(fn func(i int, node *Node)) {
+	for i, node := range n.Slice() {
+		fn(i, node)
+	}
+}
+
 // Value returns the node value
 func (n *Node) Value() string {
 	if n == nil || n.Node == nil {
